@@ -1,0 +1,2940 @@
+{
+  "name": "Production Lead Scraper - SerpAPI + Email Enrichment",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const f=$json;\nconst b={\n  niche:f['Niche'],\n  location:f['Location'],\n  country:f['Country'],\n  minRating:f['Minimu Rating']??f['Minimum Rating'],\n  minReviews:f['Minimum Reviews'],\n  websiteRequired:f['Website Required'],\n  enrichEmails:f['Enrich Emails'],\n  searchMode:f['Search Mode']\n};\nconst clean=s=>String(s??'').trim();\nconst niche=clean(b.niche), location=clean(b.location), country=clean(b.country||'Pakistan');\nconst minRating=Math.min(5,Math.max(0,Number(b.minRating??3.5)||0));\nconst minReviews=Math.max(0,Number(b.minReviews??5)||0);\nconst websiteRequired=clean(b.websiteRequired||'Yes').toLowerCase()==='yes';\nconst enrichEmails=clean(b.enrichEmails||'Yes').toLowerCase()==='yes';\nconst searchMode=clean(b.searchMode||'focused');\nif(!niche||!location) throw new Error('Niche and Location are required.');\nconst runId=`run_${Date.now()}_${Math.random().toString(36).slice(2,10)}`;\nconst glMap={Pakistan:'pk','United States':'us','USA':'us','United Kingdom':'uk','UK':'uk',Canada:'ca',Australia:'au',Germany:'de',France:'fr',UAE:'ae','Saudi Arabia':'sa',India:'in','South Africa':'za',Nigeria:'ng'};\nconst gl=glMap[country]||'';\nconst variants=searchMode==='broad'\n ? [`${niche} ${location} ${country}`,`${niche} in ${location} ${country}`,`${niche} near ${location} ${country}`]\n : [`${niche} in ${location} ${country}`,`${niche} ${location} ${country}`];\nreturn [{json:{runId,niche,location,country,minRating,minReviews,websiteRequired,enrichEmails,searchMode,gl,variants,queryIndex:0,start:0,leadsSaved:0,pagesProcessed:0,apiErrors:0,emailsFound:0,skipped:0,status:'running',message:'Starting SerpAPI scraper…',startedAt:new Date().toISOString()}}];"
+      },
+      "id": "0f1fcb61-8dfa-43eb-b863-9e431c05feed",
+      "name": "Normalize Start",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        3072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{$json.runId}}",
+            "status": "running",
+            "niche": "={{$json.niche}}",
+            "location": "={{$json.location}}",
+            "country": "={{$json.country}}",
+            "min_rating": "={{$json.minRating}}",
+            "min_reviews": "={{$json.minReviews}}",
+            "website_required": "={{$json.websiteRequired}}",
+            "enrich_emails": "={{$json.enrichEmails}}",
+            "query_index": "={{$json.queryIndex}}",
+            "start": "={{$json.start}}",
+            "leads_saved": "0",
+            "pages_processed": "0",
+            "api_errors": "0",
+            "emails_found": "0",
+            "skipped": "0",
+            "stop_requested": "false",
+            "message": "Starting SerpAPI scraper…",
+            "started_at": "={{$json.startedAt}}",
+            "updated_at": "={{$now}}"
+          },
+          "matchingColumns": [
+            "run_id"
+          ],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_rating",
+              "displayName": "min_rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_reviews",
+              "displayName": "min_reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website_required",
+              "displayName": "website_required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enrich_emails",
+              "displayName": "enrich_emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "query_index",
+              "displayName": "query_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "start",
+              "displayName": "start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "leads_saved",
+              "displayName": "leads_saved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pages_processed",
+              "displayName": "pages_processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "api_errors",
+              "displayName": "api_errors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emails_found",
+              "displayName": "emails_found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stop_requested",
+              "displayName": "stop_requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a3dc34dc-f2af-4485-a9e6-d43705d84015",
+      "name": "Create Run State",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        3072
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Create Run State overwrites $json with the sheet row, so restore the full run context.\nreturn [{json:{...$('Normalize Start').first().json}}];\n"
+      },
+      "id": "e1cd067d-300e-47c6-b6d3-dfb4465a0e5e",
+      "name": "Restore Start Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        3072
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j=$json;\nconst q=j.variants[j.queryIndex];\nif(q==null) return [{json:{...j,finished:true,message:'All search variants completed.'}}];\nreturn [{json:{...j,finished:false,searchQuery:q,requestStart:Number(j.start||0),\n  message:`Searching \"${q}\" — page offset ${Number(j.start||0)}`}}];\n"
+      },
+      "id": "55122862-39b3-4181-a0c2-c269d6cc3d42",
+      "name": "Prepare Serp Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        3072
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "run_id",
+              "lookupValue": "={{ $json.runId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2cb8373-3d77-4588-b704-c9c514bc59d7",
+      "name": "Read Run Control",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1712,
+        3072
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst state=$('Prepare Serp Request').first().json;\nconst row=$input.first()?.json||{};\nconst stop=String(row.stop_requested??'false').toLowerCase()==='true';\nif(stop) return [{json:{...state,shouldStop:true,status:'stopped',message:'Stop requested. Finishing current item safely…'}}];\nreturn [{json:{...state,shouldStop:false}}];\n"
+      },
+      "id": "27c7547c-5412-47ad-b37c-fb178d1f3e6d",
+      "name": "Check Stop",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        3072
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.shouldStop}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dc94f6a7-80c9-49bd-8cb7-c438123a882f",
+      "name": "Should Stop?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2160,
+        3072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{$json.runId}}",
+            "status": "stopped",
+            "leads_saved": "={{$json.leadsSaved}}",
+            "pages_processed": "={{$json.pagesProcessed}}",
+            "api_errors": "={{$json.apiErrors}}",
+            "emails_found": "={{$json.emailsFound}}",
+            "skipped": "={{$json.skipped}}",
+            "stop_requested": "true",
+            "message": "Stopped by user.",
+            "updated_at": "={{$now}}"
+          },
+          "matchingColumns": [
+            "run_id"
+          ],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_rating",
+              "displayName": "min_rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_reviews",
+              "displayName": "min_reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website_required",
+              "displayName": "website_required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enrich_emails",
+              "displayName": "enrich_emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "query_index",
+              "displayName": "query_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "start",
+              "displayName": "start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "leads_saved",
+              "displayName": "leads_saved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pages_processed",
+              "displayName": "pages_processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "api_errors",
+              "displayName": "api_errors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emails_found",
+              "displayName": "emails_found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stop_requested",
+              "displayName": "stop_requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "10e5890a-8156-4675-be37-9e917d5f6d09",
+      "name": "Mark Stopped",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2464,
+        2832
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_maps"
+            },
+            {
+              "name": "q",
+              "value": "={{$json.searchQuery}}"
+            },
+            {
+              "name": "type",
+              "value": "search"
+            },
+            {
+              "name": "start",
+              "value": "={{$json.requestStart}}"
+            },
+            {
+              "name": "hl",
+              "value": "en"
+            },
+            {
+              "name": "gl",
+              "value": "={{$json.gl}}"
+            },
+            {
+              "name": "no_cache",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "76571a1e-1563-4282-8628-7ad3f4de80c7",
+      "name": "SerpAPI Google Maps",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2464,
+        3088
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "serpApi": {
+          "id": "TrXWC541gt0x4tHf",
+          "name": "SerpAPI account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ctx=$('Check Stop').first().json;\nconst j=$json||{};\nconst results=Array.isArray(j.local_results)?j.local_results:[];\nconst errMsg=String(j.error||'');\n// SerpAPI returns an \"error\" when pagination runs out of results - that is a normal end, not a failure.\nconst noRes=/hasn't returned any results|no results/i.test(errMsg);\nconst apiError=!noRes && !!(j.error || (j.search_metadata?.status && j.search_metadata.status!=='Success'));\nreturn [{json:{...ctx,apiError,apiErrorMessage:errMsg,results,hasResults:results.length>0,\n  nextPage:results.length>0,\n  message:apiError?`SerpAPI error: ${errMsg}`:`Received ${results.length} results for offset ${ctx.requestStart}.`}}];\n"
+      },
+      "id": "9be50364-0e71-4571-898a-e9838024501e",
+      "name": "Handle Serp Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        3088
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx=$json;\nconst blocked=['instagram.com','facebook.com','fb.com','tiktok.com','linkedin.com','twitter.com','x.com','youtube.com','youtu.be','pinterest.com','snapchat.com','whatsapp.com','wa.me','telegram.me','t.me','linktr.ee','threads.net'];\nconst normUrl=u=>{if(!u||typeof u!=='string')return '';let x=u.trim();if(!/^https?:\\/\\//i.test(x))x='https://'+x;const m=x.match(/^(https?:\\/\\/[^\\/?#]+)/i);return m?m[1].toLowerCase():''};\nconst host=u=>{const m=String(u).match(/^https?:\\/\\/(?:www\\.)?([^\\/?#:]+)/i);return m?m[1].toLowerCase():''};\nconst nicheTokens=String(ctx.niche).toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>=3).map(t=>t.slice(0,4));\nconst out=[],seen=new Set();\nlet skipped=Number(ctx.skipped||0);\nconst why={niche:0,no_website:0,social_site:0,rating:0,reviews:0};\nconst useNicheFilter=ctx.searchMode==='broad';\nfor(const r of (ctx.results||[])){\n const name=String(r.title||r.name||'').trim(), desc=String(r.description||r.snippet||'').trim();\n const types=[r.type,...(Array.isArray(r.types)?r.types:[])].filter(Boolean).join(' ');\n const hay=(name+' '+desc+' '+types).toLowerCase();\n const nicheMatch=!useNicheFilter || nicheTokens.length<=1 || nicheTokens.some(t=>hay.includes(t));\n if(!nicheMatch){skipped++;why.niche++;continue;}\n const website=normUrl(r.website||r.link||'');\n if(ctx.websiteRequired && !website){skipped++;why.no_website++;continue;}\n if(website && blocked.some(d=>host(website)===d||host(website).endsWith('.'+d))){skipped++;why.social_site++;continue;}\n const rating=Number(r.rating||0), reviews=Number(r.reviews||0);\n if(rating < Number(ctx.minRating||0)){skipped++;why.rating++;continue;}\n if(reviews < Number(ctx.minReviews||0)){skipped++;why.reviews++;continue;}\n const key=String(r.place_id||r.data_cid||website||r.phone||`${name}|${r.address||''}`).toLowerCase();\n if(!key||seen.has(key))continue; seen.add(key);\n out.push({runId:ctx.runId,website,business_name:name,description:desc,niche:ctx.niche,ratings:rating,reviews,\n  reviews_url:r.reviews_link||'',location:ctx.location,phone:r.phone?\"'\"+r.phone:'',address:r.address||'',data_cid:r.data_cid||'',place_id:r.place_id||'',\n  gps_lat:r.gps_coordinates?.latitude??'',gps_lng:r.gps_coordinates?.longitude??'',data_scrapped:new Date().toISOString(),\n  enrichEmails:ctx.enrichEmails});\n}\nreturn [{json:{...ctx,skipped,skipReasons:why,leadBatch:out,leadCount:out.length}}];"
+      },
+      "id": "00d59d04-c419-4e9a-9611-031a1cefbdbc",
+      "name": "Filter & Normalize Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2912,
+        3088
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.leadCount}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1858e3b6-fa54-4c4c-97b3-17017b1b0cba",
+      "name": "Has Leads?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3136,
+        3088
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ctx=$json;\nconst arr=Array.isArray(ctx.leadBatch)?ctx.leadBatch:[];\nreturn arr.map(x=>({json:{...x}}));\n"
+      },
+      "id": "803626bc-4876-42cc-9dbb-aa7cd8e22937",
+      "name": "Expand Lead Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        2992
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e9db2ef0-af45-46ea-9b10-654432c4313d",
+      "name": "Lead Batch Loop",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3584,
+        2992
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.website}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5df75bd1-38c1-4535-afe2-e6a3d44f9e00",
+      "name": "Has Website To Save",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3824,
+        2752
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1189592644,
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1189592644"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "website": "={{$json.website}}",
+            "business_name": "={{$json.business_name}}",
+            "niche": "={{$json.niche}}",
+            "ratings": "={{$json.ratings}}",
+            "reviews": "={{$json.reviews}}",
+            "reviews_url": "={{$json.reviews_url}}",
+            "location": "={{$json.location}}",
+            "phone": "={{$json.phone}}",
+            "address": "={{$json.address}}",
+            "data_scrapped": "={{$json.data_scrapped}}"
+          },
+          "matchingColumns": [
+            "website"
+          ],
+          "schema": [
+            {
+              "id": "business_name",
+              "displayName": "business_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ratings",
+              "displayName": "ratings",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviews",
+              "displayName": "reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviews_url",
+              "displayName": "reviews_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "address",
+              "displayName": "address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_cid",
+              "displayName": "data_cid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_id",
+              "displayName": "place_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gps_lat",
+              "displayName": "gps_lat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gps_lng",
+              "displayName": "gps_lng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_scrapped",
+              "displayName": "data_scrapped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "77938dd4-30f5-4e38-b6ce-79a987499530",
+      "name": "Save Lead With Website",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4048,
+        2656
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1189592644,
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1189592644"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "website": "={{$json.website}}",
+            "business_name": "={{$json.business_name}}",
+            "niche": "={{$json.niche}}",
+            "ratings": "={{$json.ratings}}",
+            "reviews": "={{$json.reviews}}",
+            "reviews_url": "={{$json.reviews_url}}",
+            "location": "={{$json.location}}",
+            "phone": "={{$json.phone}}",
+            "address": "={{$json.address}}",
+            "data_scrapped": "={{$json.data_scrapped}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "business_name",
+              "displayName": "business_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ratings",
+              "displayName": "ratings",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviews",
+              "displayName": "reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviews_url",
+              "displayName": "reviews_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "address",
+              "displayName": "address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_cid",
+              "displayName": "data_cid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_id",
+              "displayName": "place_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gps_lat",
+              "displayName": "gps_lat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gps_lng",
+              "displayName": "gps_lng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_scrapped",
+              "displayName": "data_scrapped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c65488d9-43aa-41ba-aa6f-14c5effc4a6d",
+      "name": "Save Lead Without Website",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4048,
+        2880
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$('Lead Batch Loop').first().json.enrichEmails}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "341dfea3-ec1a-4e88-a8d3-b55a0e9eacf0",
+      "name": "Enrich Emails?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4272,
+        2752
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.website}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2f5358c9-f629-4961-a8bf-deb395160ac7",
+      "name": "Has Website For Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4496,
+        2656
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.website}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "14efb70f-daf0-4ff3-8273-092c5cbb8a3b",
+      "name": "Get Web HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4720,
+        2560
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst raw=String($json.data??$json.body??$json.html??$json.text??'');\nconst decoded=raw\n .replace(/&#(\\d+);/g,(_,n)=>String.fromCharCode(Number(n)))\n .replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCharCode(parseInt(h,16)))\n .replace(/&commat;/gi,'@').replace(/&nbsp;/gi,' ');\nconst set=new Set();\nfor(const m of raw.matchAll(/mailto:([^\\s\"'<>]+)\\b/gi)){let e=m[1].split('?')[0];try{e=decodeURIComponent(e)}catch{};set.add(e);}\nfor(const e of decoded.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g)||[])set.add(e);\nconst blocked=['example.com','domain.com','test.com','demo.com','sample.com','email.com','sentry.io','sentry.wixpress.com','sentry-next.wixpress.com'];\nconst badLocal=['test','demo','example','sample','fake','yourname','username','youremail','yourmail','enter','qwerty','asdf'];\nconst prefixes=['wordpress','noreply','no-reply','donotreply','webmaster'];\nconst traps=['spamtrap','honeypot'];\nconst fileExt=/\\.(png|jpe?g|gif|svg|webp|css|js|woff2?|ico)$/i;\nconst valid=/^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$/i;\nconst emails=[...set].map(e=>String(e).trim().replace(/^mailto:/i,'').replace(/[),.;:!?]+$/g,'').toLowerCase()).filter(e=>valid.test(e)).filter(e=>{\n const [l,d]=e.split('@'); if(!l||!d||d.includes('..')||blocked.includes(d))return false;\n if(fileExt.test(e))return false;\n if(badLocal.includes(l)||prefixes.some(x=>l.startsWith(x))||traps.some(x=>e.includes(x)))return false;\n return true;\n});\nreturn [{json:{...$('Lead Batch Loop').first().json,emails:[...new Set(emails)],email_enrichment_status:'completed'}}];\n"
+      },
+      "id": "d066275c-0904-4ded-9302-639921bf46ce",
+      "name": "Extract & Filter Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4944,
+        2560
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1189592644,
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1189592644"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "website": "={{$json.website}}",
+            "email": "={{($json.emails||[]).join(', ')}}"
+          },
+          "matchingColumns": [
+            "website"
+          ],
+          "schema": [
+            {
+              "id": "business_name",
+              "displayName": "business_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ratings",
+              "displayName": "ratings",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviews",
+              "displayName": "reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reviews_url",
+              "displayName": "reviews_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "address",
+              "displayName": "address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_cid",
+              "displayName": "data_cid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_id",
+              "displayName": "place_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gps_lat",
+              "displayName": "gps_lat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gps_lng",
+              "displayName": "gps_lng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_scrapped",
+              "displayName": "data_scrapped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "726f5e52-fb53-4a61-87c0-a69969c0657b",
+      "name": "Update Lead Email",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        5168,
+        2560
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ctx=$('Filter & Normalize Leads').first().json;\nconst lead=$('Lead Batch Loop').first().json;\nlet prevSaved=Number(ctx.leadsSaved||0), prevEmails=Number(ctx.emailsFound||0);\ntry{\n  const p=$('Persist Progress').last().json;\n  prevSaved=Math.max(prevSaved,Number(p.leads_saved||0));\n  prevEmails=Math.max(prevEmails,Number(p.emails_found||0));\n}catch(e){}\nconst found=String($json.email||'').split(',').map(s=>s.trim()).filter(Boolean).length;\nreturn [{json:{...ctx,leadsSaved:prevSaved+1,emailsFound:prevEmails+found,\n message:`Saved: ${lead.business_name||'lead'}${found?` • ${found} email(s) found`:''}`}}];\n"
+      },
+      "id": "058a0ed2-a4fd-4b31-9971-7b48b58d51ee",
+      "name": "Update Lead Counter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5392,
+        2752
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "run_id",
+              "lookupValue": "={{ $('Filter & Normalize Leads').first().json.runId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "68ce2164-2164-419c-b30c-bff37557aea9",
+      "name": "Read Current Run State",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3824,
+        3232
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ctx=$('Filter & Normalize Leads').first().json;\nconst st=$input.first()?.json||{};\nconst n=v=>Number(v||0);\nconst {results,leadBatch,leadCount,hasResults,nextPage,apiError,apiErrorMessage,finished,shouldStop,skipReasons,...base}=ctx;\nlet qi=n(ctx.queryIndex), start=n(ctx.start);\nconst pages=Math.max(n(st.pages_processed),n(ctx.pagesProcessed))+1;\nconst apiErrors=Math.max(n(st.api_errors),n(ctx.apiErrors))+(apiError?1:0);\nconst leadsSaved=Math.max(n(st.leads_saved),n(ctx.leadsSaved));\nconst emailsFound=Math.max(n(st.emails_found),n(ctx.emailsFound));\nconst skipped=Math.max(n(st.skipped),n(ctx.skipped));\nif(!hasResults || apiError || start>=400){qi++;start=0;}else{start+=20;}\nreturn [{json:{...base,queryIndex:qi,start,pagesProcessed:pages,apiErrors,leadsSaved,emailsFound,skipped,status:'running',\n message:apiError?`SerpAPI error: ${ctx.apiErrorMessage||'unknown'} — moving to next search variant.`\n  :`Page ${pages}: ${(results||[]).length} found, ${leadCount||0} kept`+(Object.entries(skipReasons||{}).filter(([k,v])=>v>0).length?` • skipped: ${Object.entries(skipReasons).filter(([k,v])=>v>0).map(([k,v])=>k+' '+v).join(', ')}`:'')}}];\n"
+      },
+      "id": "c4ed0f88-e7f8-450a-a35a-5ea8709ab135",
+      "name": "Advance Page State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4048,
+        3232
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.queryIndex < $json.variants.length}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4f561edf-2e0d-4dcf-868b-7eac343ca2c9",
+      "name": "More Queries?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4272,
+        3232
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{$json.runId}}",
+            "leads_saved": "={{$json.leadsSaved}}",
+            "pages_processed": "={{$json.pagesProcessed}}",
+            "api_errors": "={{$json.apiErrors}}",
+            "emails_found": "={{$json.emailsFound}}",
+            "skipped": "={{$json.skipped}}",
+            "query_index": "={{$json.queryIndex}}",
+            "start": "={{$json.start}}",
+            "message": "={{$json.message}}",
+            "updated_at": "={{$now}}"
+          },
+          "matchingColumns": [
+            "run_id"
+          ],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_rating",
+              "displayName": "min_rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_reviews",
+              "displayName": "min_reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website_required",
+              "displayName": "website_required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enrich_emails",
+              "displayName": "enrich_emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "query_index",
+              "displayName": "query_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "start",
+              "displayName": "start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "leads_saved",
+              "displayName": "leads_saved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pages_processed",
+              "displayName": "pages_processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "api_errors",
+              "displayName": "api_errors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emails_found",
+              "displayName": "emails_found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stop_requested",
+              "displayName": "stop_requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "67304504-43b6-48c2-8031-c6146105bd05",
+      "name": "Persist Page Progress",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4496,
+        3136
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Persist Page Progress returns the sheet row, so restore the full run context for the next page.\nreturn [{json:{...$('Advance Page State').first().json}}];\n"
+      },
+      "id": "f7ea1a43-5bd8-476c-a328-69899efd958c",
+      "name": "Restore Loop Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4720,
+        3136
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{$json.runId}}",
+            "status": "completed",
+            "leads_saved": "={{$json.leadsSaved}}",
+            "pages_processed": "={{$json.pagesProcessed}}",
+            "api_errors": "={{$json.apiErrors}}",
+            "emails_found": "={{$json.emailsFound}}",
+            "skipped": "={{$json.skipped}}",
+            "stop_requested": "false",
+            "message": "Completed all search variants.",
+            "completed_at": "={{$now}}",
+            "updated_at": "={{$now}}"
+          },
+          "matchingColumns": [
+            "run_id"
+          ],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_rating",
+              "displayName": "min_rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_reviews",
+              "displayName": "min_reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website_required",
+              "displayName": "website_required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enrich_emails",
+              "displayName": "enrich_emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "query_index",
+              "displayName": "query_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "start",
+              "displayName": "start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "leads_saved",
+              "displayName": "leads_saved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pages_processed",
+              "displayName": "pages_processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "api_errors",
+              "displayName": "api_errors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emails_found",
+              "displayName": "emails_found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stop_requested",
+              "displayName": "stop_requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1361edf9-cccf-41e4-a31b-e81352f34fb7",
+      "name": "Mark Completed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4496,
+        3360
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Lead Scraper",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Niche",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Location",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Country",
+              "defaultValue": "Pakistan",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Minimum Rating",
+              "fieldType": "number",
+              "defaultValue": "3.5",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Minimum Reviews",
+              "fieldType": "number",
+              "defaultValue": "5",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Website Required",
+              "fieldType": "dropdown",
+              "defaultValue": "Yes",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Enrich Emails",
+              "fieldType": "dropdown",
+              "defaultValue": "Yes",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Search Mode",
+              "fieldType": "dropdown",
+              "defaultValue": "focused",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "focused"
+                  },
+                  {
+                    "option": "broad"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        528,
+        3072
+      ],
+      "id": "c930784d-1493-49dd-bc94-ef76364df2b9",
+      "name": "On form submission",
+      "webhookId": "c706d1f5-de11-494c-8f6d-bf84217f84b8"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE",
+          "mode": "list",
+          "cachedResultName": "Serp Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1009760460,
+          "mode": "list",
+          "cachedResultName": "ScrapingLogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16moGZmw-rOADDCErJrMUQ5OLJkzerQvSTJz1OBnAkhE/edit#gid=1009760460"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{$json.runId}}",
+            "leads_saved": "={{$json.leadsSaved}}",
+            "pages_processed": "={{$json.pagesProcessed}}",
+            "api_errors": "={{$json.apiErrors}}",
+            "emails_found": "={{$json.emailsFound}}",
+            "skipped": "={{$json.skipped}}",
+            "query_index": "={{$json.queryIndex}}",
+            "start": "={{$json.start}}",
+            "message": "={{$json.message}}",
+            "updated_at": "={{$now}}"
+          },
+          "matchingColumns": [
+            "run_id"
+          ],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_rating",
+              "displayName": "min_rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "min_reviews",
+              "displayName": "min_reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website_required",
+              "displayName": "website_required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enrich_emails",
+              "displayName": "enrich_emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "query_index",
+              "displayName": "query_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "start",
+              "displayName": "start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "leads_saved",
+              "displayName": "leads_saved",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pages_processed",
+              "displayName": "pages_processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "api_errors",
+              "displayName": "api_errors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "emails_found",
+              "displayName": "emails_found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skipped",
+              "displayName": "skipped",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stop_requested",
+              "displayName": "stop_requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "completed_at",
+              "displayName": "completed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8710153c-5980-4f21-8bfc-dd0f803a25a2",
+      "name": "Persist Progress",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        5616,
+        2752
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wMF5y0nqBWfNnKJ4",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalize Start": {
+      "main": [
+        [
+          {
+            "node": "Create Run State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Run State": {
+      "main": [
+        [
+          {
+            "node": "Restore Start Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Start Context": {
+      "main": [
+        [
+          {
+            "node": "Prepare Serp Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Serp Request": {
+      "main": [
+        [
+          {
+            "node": "Read Run Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Run Control": {
+      "main": [
+        [
+          {
+            "node": "Check Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Stop": {
+      "main": [
+        [
+          {
+            "node": "Should Stop?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Stop?": {
+      "main": [
+        [
+          {
+            "node": "Mark Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SerpAPI Google Maps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI Google Maps": {
+      "main": [
+        [
+          {
+            "node": "Handle Serp Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Serp Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Serp Response": {
+      "main": [
+        [
+          {
+            "node": "Filter & Normalize Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Normalize Leads": {
+      "main": [
+        [
+          {
+            "node": "Has Leads?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Leads?": {
+      "main": [
+        [
+          {
+            "node": "Expand Lead Batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Current Run State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Lead Batch": {
+      "main": [
+        [
+          {
+            "node": "Lead Batch Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Batch Loop": {
+      "main": [
+        [
+          {
+            "node": "Read Current Run State",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Website To Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Website To Save": {
+      "main": [
+        [
+          {
+            "node": "Save Lead With Website",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Lead Without Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead With Website": {
+      "main": [
+        [
+          {
+            "node": "Enrich Emails?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead Without Website": {
+      "main": [
+        [
+          {
+            "node": "Enrich Emails?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Emails?": {
+      "main": [
+        [
+          {
+            "node": "Has Website For Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Lead Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Website For Email": {
+      "main": [
+        [
+          {
+            "node": "Get Web HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Lead Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Web HTML": {
+      "main": [
+        [
+          {
+            "node": "Extract & Filter Emails",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Lead Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Filter Emails": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Email": {
+      "main": [
+        [
+          {
+            "node": "Update Lead Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Counter": {
+      "main": [
+        [
+          {
+            "node": "Persist Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Current Run State": {
+      "main": [
+        [
+          {
+            "node": "Advance Page State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advance Page State": {
+      "main": [
+        [
+          {
+            "node": "More Queries?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Queries?": {
+      "main": [
+        [
+          {
+            "node": "Persist Page Progress",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Page Progress": {
+      "main": [
+        [
+          {
+            "node": "Restore Loop Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Loop Context": {
+      "main": [
+        [
+          {
+            "node": "Prepare Serp Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Normalize Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Progress": {
+      "main": [
+        [
+          {
+            "node": "Lead Batch Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3dc4a1af-0261-4b17-96b0-525fecbd082c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1b2e144c8475e98243411da4d77a41556fd4d8c921d2dd6709aede2c37d99aaf"
+  },
+  "nodeGroups": [],
+  "id": "kGyKSAFxPRX2dxz7",
+  "tags": []
+}
